@@ -1,0 +1,59 @@
+public class CustomerController {
+    public String firstName { get; set; }
+    public String lastName { get; set; }
+    public String phoneNumber { get; set; }
+    public String email { get; set; }
+    public String website { get; set; }
+    public String language { get; set; }
+    public List<Account> createdCustomers { get; set; }
+    public List<Contact> contactInfo {get; set;}
+
+    public CustomerController() {
+        createdCustomers = new List<Account>();
+        contactInfo = new List<Contact>();
+    }
+
+    public void createAccountAndContact() {
+        Boolean isValid = true;
+        
+        if (String.isBlank(phoneNumber) || phoneNumber.length() != 10 || !phoneNumber.isNumeric()) {
+            isValid = false;
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR, 'Phone number must be a 10-digit numeric value.'));
+        }
+        
+        if (String.isBlank(email) || !isValidEmail(email)) {
+            isValid = false;
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR, 'Invalid email address.'));
+        }
+        
+        if (isValid) {
+            Account newAccount = new Account(
+                Name = firstName + ' ' + lastName,
+                Phone = phoneNumber,
+                Website = website,
+                Language__c = language,
+                 Email__c = email
+            );
+            insert newAccount;
+
+            Contact newContact = new Contact(
+                AccountId = newAccount.Id,
+                FirstName = firstName,
+                LastName = lastName,
+                Phone = phoneNumber
+               
+            );
+            insert newContact;
+            
+            createdCustomers.add(newAccount);
+            contactInfo = [SELECT Id, FirstName, LastName, Phone, Email, Account.Name, Account.Phone, Account.Website, Account.Language__c FROM Contact ];
+            
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.INFO, 'Account and Contact created successfully.'));
+        }
+    }
+    
+    private Boolean isValidEmail(String emailStr) {
+        String emailRegex = '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}';
+        return Pattern.matches(emailRegex, emailStr);
+    }
+}
